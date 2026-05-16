@@ -87,28 +87,29 @@
                 };
             }
 
-            // Начинаем генерацию слоёв, но фильтруем самую середину
-            for (let scaleLayer = 1; scaleLayer <= 17; scaleLayer += 2.2) {
-                const totalPoints = Math.min(scaleLayer * 2.5 + 6, 40); 
+            // Увеличили шаг между слоями до 2.6, чтобы слова не налезали друг на друга
+            for (let scaleLayer = 1; scaleLayer <= 17; scaleLayer += 2.6) {
+                const totalPoints = Math.min(scaleLayer * 2.2 + 5, 35); 
                 for (let i = 0; i < totalPoints; i++) {
                     const t = (i / totalPoints) * Math.PI * 2;
                     const pos = getHeartCoords(t);
 
-                    // ФИЛЬТР ЦЕНТРА: Полностью убираем самые первые слои (1 и 3.2), 
-                    // чтобы стереть лишнюю жирноту из середины сердца
-                    if (scaleLayer < 4) {
+                    const dx = pos.x * scaleLayer * 1.0;
+                    const dy = pos.y * scaleLayer * 1.0;
+
+                    // Полностью убираем самые внутренние слои, где была жирнота
+                    if (scaleLayer < 4.5) {
                         continue;
                     }
 
                     words.push({
-                        dx: pos.x * scaleLayer * 1.0, 
-                        dy: pos.y * scaleLayer * 1.0,
+                        dx: dx, 
+                        dy: dy,
                         size: 13 
                     });
                 }
             }
 
-            // Плавное раскрытие из центра (эффект фейерверка) под ваши 5 секунд музыки
             let currentScale = 0.1; 
             const targetScale = 1.05;
             const scaleStep = (targetScale - currentScale) / 300; 
@@ -150,7 +151,16 @@
             
             if (music) {
                 music.volume = 1.0;
-                music.play().catch(e => console.log("Звук заблокирован:", e));
+                music.play().catch(e => {
+                    console.log("Браузер временно заблокировал автозвук. Ждем касания экрана.");
+                    const unlockSound = () => {
+                        music.play();
+                        document.removeEventListener('click', unlockSound);
+                        document.removeEventListener('touchstart', unlockSound);
+                    };
+                    document.addEventListener('click', unlockSound);
+                    document.addEventListener('touchstart', unlockSound);
+                });
             }
         });
 
