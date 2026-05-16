@@ -31,14 +31,23 @@
         #yesBtn { background-color: #ff4d4d; color: white; }
         #noBtn { background-color: #808080; color: white; position: absolute; left: 100px; }
         
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        /* Идеально ровный контейнер для текстового сердца */
+        #heartContainer {
             display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.1);
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace; /* Моноширинный шрифт: все буквы строго одинаковой ширины */
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #ff3366;
+            text-shadow: 0 0 12px #ff3366;
+            white-space: pre;
             z-index: 1;
+            user-select: none;
         }
     </style>
 </head>
@@ -50,16 +59,17 @@
         <button id="noBtn">Нет</button>
     </div>
 
-    <canvas id="heartCanvas"></canvas>
-    <audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
+    <div id="heartContainer"></div>
 
     <script>
         const noBtn = document.getElementById('noBtn');
         const yesBtn = document.getElementById('yesBtn');
         const question = document.getElementById('question');
-        const music = document.getElementById('bgMusic');
-        const canvas = document.getElementById('heartCanvas');
-        const ctx = canvas.getContext('2d');
+        const heartContainer = document.getElementById('heartContainer');
+
+        // Создаем музыку через JavaScript
+        const music = new Audio('music.mp3');
+        music.loop = true;
 
         function moveButton() {
             const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
@@ -71,104 +81,66 @@
         noBtn.addEventListener('mouseover', moveButton);
         noBtn.addEventListener('touchstart', moveButton);
 
-        let animationFrame;
+        // Идеально выверенная сетка сердца. Буквы физически не могут наложиться друг на друга.
+        const heartTemplate = 
+            "    love you love you          love you love you\n" +
+            "  love you love you love    love you love you love\n" +
+            "love you love you love you love you love you love you\n" +
+            "love you love you love you love you love you love you\n" +
+            "love you love you love you love you love you love you\n" +
+            "  love you love you love you love you love you love\n" +
+            "    love you love you love you love you love you\n" +
+            "      love you love you love you love you love\n" +
+            "        love you love you love you love\n" +
+            "          love you love you love\n" +
+            "            love you love you\n" +
+            "              love you love\n" +
+            "                love you\n" +
+            "                  love\n" +
+            "                   v";
+
         function startHeartAnimation() {
-            canvas.style.display = 'block';
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            const words = [];
-            const text = "love you"; 
-            
-            function getHeartCoords(t) {
-                return {
-                    x: 16 * Math.pow(Math.sin(t), 3),
-                    y: -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t))
-                };
-            }
-
-            // Увеличили шаг между слоями до 2.6, чтобы слова не налезали друг на друга
-            for (let scaleLayer = 1; scaleLayer <= 17; scaleLayer += 2.6) {
-                const totalPoints = Math.min(scaleLayer * 2.2 + 5, 35); 
-                for (let i = 0; i < totalPoints; i++) {
-                    const t = (i / totalPoints) * Math.PI * 2;
-                    const pos = getHeartCoords(t);
-
-                    const dx = pos.x * scaleLayer * 1.0;
-                    const dy = pos.y * scaleLayer * 1.0;
-
-                    // Полностью убираем самые внутренние слои, где была жирнота
-                    if (scaleLayer < 4.5) {
-                        continue;
-                    }
-
-                    words.push({
-                        dx: dx, 
-                        dy: dy,
-                        size: 13 
-                    });
-                }
-            }
+            document.body.style.backgroundColor = '#000000';
+            heartContainer.innerText = heartTemplate;
+            heartContainer.style.display = 'block';
 
             let currentScale = 0.1; 
-            const targetScale = 1.05;
+            const targetScale = 1.0; 
+            // Ровно 5 секунд плавного раскрытия (300 кадров)
             const scaleStep = (targetScale - currentScale) / 300; 
 
-            function draw() {
-                ctx.fillStyle = 'black';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+            function animate() {
                 if (currentScale < targetScale) {
                     currentScale += scaleStep; 
+                    heartContainer.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
+                    requestAnimationFrame(animate);
                 } else {
-                    currentScale = targetScale;
+                    heartContainer.style.transform = `translate(-50%, -50%) scale(${targetScale})`;
                 }
-
-                ctx.save();
-                ctx.translate(canvas.width / 2, canvas.height / 2);
-
-                words.forEach(w => {
-                    ctx.font = `italic bold ${w.size}px 'Trebuchet MS', sans-serif`;
-                    ctx.fillStyle = "#ff3366";
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = '#ff3366';
-                    
-                    ctx.fillText(text, w.dx * currentScale, w.dy * currentScale);
-                });
-
-                ctx.restore();
-                animationFrame = requestAnimationFrame(draw);
             }
-            draw();
+            animate();
+        }
+
+        function playWithFallback() {
+            music.volume = 1.0;
+            music.play().catch(e => {
+                console.log("Браузер заблокировал автозвук. Ждем клика.");
+                const forceUnlock = () => {
+                    music.play();
+                    document.removeEventListener('click', forceUnlock);
+                    document.removeEventListener('touchstart', forceUnlock);
+                };
+                document.addEventListener('click', forceUnlock);
+                document.addEventListener('touchstart', forceUnlock);
+            });
         }
 
         yesBtn.addEventListener('click', () => {
             question.style.display = 'none';
             document.querySelector('.buttons').style.display = 'none';
-            document.body.style.backgroundColor = '#000000';
             
             startHeartAnimation();
-            
-            if (music) {
-                music.volume = 1.0;
-                music.play().catch(e => {
-                    console.log("Браузер временно заблокировал автозвук. Ждем касания экрана.");
-                    const unlockSound = () => {
-                        music.play();
-                        document.removeEventListener('click', unlockSound);
-                        document.removeEventListener('touchstart', unlockSound);
-                    };
-                    document.addEventListener('click', unlockSound);
-                    document.addEventListener('touchstart', unlockSound);
-                });
-            }
-        });
-
-        window.addEventListener('resize', () => {
-            if (canvas.style.display === 'block') {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
+            playWithFallback();
         });
     </script>
 </body>
