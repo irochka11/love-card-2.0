@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Для тебя ❤️</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #ffe6e6;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            margin: 0;
+            transition: background-color 1s;
+        }
+        h1 { color: #ff4d4d; font-size: 2.5rem; text-align: center; z-index: 10; user-select: none; }
+        .buttons { display: flex; gap: 20px; margin-top: 20px; position: relative; z-index: 10; }
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            user-select: none;
+        }
+        #yesBtn { background-color: #ff4d4d; color: white; }
+        #noBtn { background-color: #808080; color: white; position: absolute; left: 100px; }
+        
+        #heartContainer {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.1);
+            text-align: center;
+            font-family: 'Trebuchet MS', sans-serif;
+            font-weight: bold;
+            font-style: italic;
+            font-size: 14px;
+            line-height: 1.3;
+            color: #ff3366;
+            text-shadow: 0 0 12px #ff3366;
+            white-space: pre;
+            z-index: 1;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="question">Ты меня любишь? 🥺</h1>
+    <div class="buttons">
+        <button id="yesBtn">Да!</button>
+        <button id="noBtn">Нет</button>
+    </div>
+
+    <div id="heartContainer"></div>
+    <audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
+
+    <script>
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const question = document.getElementById('question');
+        const music = document.getElementById('bgMusic');
+        const heartContainer = document.getElementById('heartContainer');
+
+        function moveButton() {
+            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
+            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
+            noBtn.style.left = `${x}px`;
+            noBtn.style.top = `${y}px`;
+        }
+
+        noBtn.addEventListener('mouseover', moveButton);
+        noBtn.addEventListener('touchstart', moveButton);
+
+        // Пересобрали шаблон без скрытых символов — теперь он отобразится ровно
+        const heartTemplate = 
+            "          love you love you          love you love you\n" +
+            "      love you love you love you  love you love you love you\n" +
+            "    love you love you love you love you love you love you love you\n" +
+            "  love you love you love you love you love you love you love you love you\n" +
+            " love you love you love you love you love you love you love you love you love\n" +
+            "love you love you love you love you love you love you love you love you love you\n" +
+            "love you love you love you love you love you love you love you love you love you\n" +
+            "love you love you love you love you love you love you love you love you love you\n" +
+            " love you love you love you love you love you love you love you love you love\n" +
+            "  love you love you love you love you love you love you love you love you\n" +
+            "    love you love you love you love you love you love you love you\n" +
+            "      love you love you love you love you love you love you\n" +
+            "          love you love you love you love you love you\n" +
+            "              love you love you love you love you\n" +
+            "                  love you love you love you\n" +
+            "                      love you love you\n" +
+            "                          love you";
+
+        function startHeartAnimation() {
+            document.body.style.backgroundColor = '#000000';
+            heartContainer.innerText = heartTemplate;
+            heartContainer.style.display = 'block';
+
+            let currentScale = 0.1; 
+            const targetScale = 1.0; 
+            const speed = 0.002; // Медленная скорость раскрытия (около 7-8 секунд)
+
+            function animate() {
+                if (currentScale < targetScale) {
+                    currentScale += speed; 
+                    heartContainer.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
+                    requestAnimationFrame(animate);
+                } else {
+                    heartContainer.style.transform = `translate(-50%, -50%) scale(${targetScale})`;
+                }
+            }
+            animate();
+        }
+
+        yesBtn.addEventListener('click', () => {
+            question.style.display = 'none';
+            document.querySelector('.buttons').style.display = 'none';
+            
+            startHeartAnimation();
+            
+            if (music) {
+                music.volume = 1.0;
+                music.play().catch(e => console.log("Звук заблокирован:", e));
+            }
+        });
+    </script>
+</body>
+</html>
