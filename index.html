@@ -87,29 +87,41 @@
                 };
             }
 
-            // Настройка слоев: убрали самые маленькие внутренние слои, чтобы разгрузить центр
-            for (let scaleLayer = 4; scaleLayer <= 17; scaleLayer += 1.6) {
-                const totalPoints = scaleLayer * 3 + 8;
+            // Начинаем генерацию слоёв, но фильтруем самую середину
+            for (let scaleLayer = 1; scaleLayer <= 17; scaleLayer += 2.2) {
+                const totalPoints = Math.min(scaleLayer * 2.5 + 6, 40); 
                 for (let i = 0; i < totalPoints; i++) {
                     const t = (i / totalPoints) * Math.PI * 2;
                     const pos = getHeartCoords(t);
+
+                    // ФИЛЬТР ЦЕНТРА: Полностью убираем самые первые слои (1 и 3.2), 
+                    // чтобы стереть лишнюю жирноту из середины сердца
+                    if (scaleLayer < 4) {
+                        continue;
+                    }
+
                     words.push({
-                        dx: pos.x * scaleLayer * 0.95 + (Math.random() * 6 - 3),
-                        dy: pos.y * scaleLayer * 0.95 + (Math.random() * 6 - 3),
-                        size: Math.floor(Math.random() * 3) + 14
+                        dx: pos.x * scaleLayer * 1.0, 
+                        dy: pos.y * scaleLayer * 1.0,
+                        size: 13 
                     });
                 }
             }
 
-            // Стартуем сразу с базового масштаба 1.0 (сердце сразу большое)
-            let currentScale = 1.0; 
+            // Плавное раскрытие из центра (эффект фейерверка) под ваши 5 секунд музыки
+            let currentScale = 0.1; 
+            const targetScale = 1.05;
+            const scaleStep = (targetScale - currentScale) / 300; 
 
             function draw() {
                 ctx.fillStyle = 'black';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // ОЧЕНЬ медленное расширение (минимальный шаг анимации)
-                currentScale += 0.0003; 
+                if (currentScale < targetScale) {
+                    currentScale += scaleStep; 
+                } else {
+                    currentScale = targetScale;
+                }
 
                 ctx.save();
                 ctx.translate(canvas.width / 2, canvas.height / 2);
